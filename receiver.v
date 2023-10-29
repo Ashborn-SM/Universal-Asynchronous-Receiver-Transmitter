@@ -48,11 +48,12 @@ module receiver(
         if(reset) begin
             current_state <= s0;
             next_state <= s0;
-            rx_counter <= 3'b000;
-            rx_counter_d <= 3'b000;
-            tick_counter <= 4'b0000;
-            tick_counter_d <= 4'b0000;
+            rx_counter <=  0;
+            rx_counter_d <= 0;
+            tick_counter <= 0;
+            tick_counter_d <= 0;
             r_rx_done <= 1'b0;
+            o_RX_DATA <= {BITS{1'b0}};
         end
         else begin 
             current_state <= next_state;
@@ -61,21 +62,21 @@ module receiver(
         end
     end
     
-    always@(current_state, i_TICK) begin
+    always@(current_state, i_TICK, i_RX) begin
         case(current_state) 
             s0: begin
                 if(~i_RX) begin
                     r_rx_done = 1'b0;
                     next_state = s1;
-                    tick_counter = 4'b0000; 
+                    tick_counter = 0; 
                 end
             end
             s1: begin
                 if(i_TICK) begin
                     if(tick_counter_d == OVERSAMPLE_RATE/2 - 1) begin 
                         next_state = s2;
-                        rx_counter = 3'b000;
-                        tick_counter = 4'b0000;
+                        rx_counter = 0;
+                        tick_counter = 0;
                     end
                     else tick_counter = tick_counter_d + 1'b1;
                 end
@@ -85,7 +86,7 @@ module receiver(
                     if(tick_counter_d == OVERSAMPLE_RATE - 1) begin
                         o_RX_DATA[rx_counter_d] = i_RX;
                         rx_counter = rx_counter_d + 1;
-                        tick_counter = 4'b0000;
+                        tick_counter = 0;
                         if(rx_counter_d == BITS - 1) next_state <= s3;
                     end
                     else tick_counter = tick_counter_d + 1'b1;
